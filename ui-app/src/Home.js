@@ -11,8 +11,7 @@ import TableHead from '@material-ui/core/TableHead'
 import TableRow from '@material-ui/core/TableRow'
 
 const CODES_API_URL = "http://127.0.0.1:8000/api/v1/myapp/codes/"
-const AUTH_TOKEN = "4812fe61775528fb206dc029fa3001d241a843eb"
-// 4812fe61775528fb206dc029fa3001d241a843eb-ddd31ad7052874b04d7ca90078a9d5ef76cd862a
+const AUTH_TOKEN_API_URL = "http://127.0.0.1:8000/api/v1/myapp/token-auth/"
 
 
 function BasicTable({ arrayOfObjects }) {
@@ -59,6 +58,9 @@ class HomePage extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            username: "",
+            password: "",
+
             codesData: {},
             codesDataPostApiStatus: null,
 
@@ -66,6 +68,9 @@ class HomePage extends React.Component {
             numCodesToCreate: null,
         }
 
+        this.handleAuthToken = this.handleAuthToken.bind(this)
+        this.setUsername = this.setUsername.bind(this)
+        this.setPassword = this.setPassword.bind(this)
         this.postCodesData = this.postCodesData.bind(this)
         this.setBatchName = this.setBatchName.bind(this)
         this.setNumCodesToCreate = this.setNumCodesToCreate.bind(this)
@@ -74,7 +79,7 @@ class HomePage extends React.Component {
     fetchCodesData() {
         axios.get(CODES_API_URL, {
             params: {
-                token: AUTH_TOKEN,
+                token: localStorage.getItem("token"),
             }
         })
             .then(response => {
@@ -103,7 +108,7 @@ class HomePage extends React.Component {
             num_codes_to_create: numCodesToCreate,
         }, {
             params: {
-                token: AUTH_TOKEN,
+                token: localStorage.getItem("token"),
             }
         })
             .then(response => {
@@ -125,19 +130,53 @@ class HomePage extends React.Component {
             })
     }
 
+    handleAuthToken() {
+        axios.post(AUTH_TOKEN_API_URL, {
+            username: this.state.username,
+            password: this.state.password,
+        })
+            .then(response => {
+                if (response) {
+                    if (response.data["token"]) {
+                        localStorage.setItem("token", response.data["token"])
+                    }
+                    else {
+                        // localStorage.setItem("token", null)
+                    }
+                }
+                else {
+                    // localStorage.setItem("token", null)
+                }
+            })
+            .catch(error => {
+                // localStorage.setItem("token", null)
+            })
+    }
+
+    deleteAuthToken() {
+        // localStorage.removeItem("token")
+        // localStorage.clear()
+    }
+
     componentDidMount() {
         this.fetchCodesData()
     }
 
-    // componentDidUpdate(prevProps, prevState, snapshot) {
-    //     if (prevState !== this.state) {
-    //         this.fetchCodesData()
-    //     }
-    // }
-
     setBatchName(event) {
         this.setState({
             batchName: event.target.value,
+        })
+    }
+
+    setUsername(event) {
+        this.setState({
+            username: event.target.value,
+        })
+    }
+
+    setPassword(event) {
+        this.setState({
+            password: event.target.value,
         })
     }
 
@@ -153,11 +192,26 @@ class HomePage extends React.Component {
             codesDataPostApiStatus,
         } = this.state
         
+        console.log("codesData...\n")
         console.log(codesData)
         
         return (
             <React.Fragment>
                 <form>
+                    <h3>Get auth token</h3>
+                    <label>
+                        Username: <input type="text" name="username" onChange={this.setUsername} />
+                    </label>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <label>
+                        Password: <input type="password" name="password" onChange={this.setPassword} />
+                    </label>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <button onClick={this.handleAuthToken}>Authorize me</button>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <button onClick={this.deleteAuthToken}>Log me out</button>
+                    <br /><br />
+
                     <h3>Create batch with codes</h3>
                     <br />
                     <label>
